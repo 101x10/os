@@ -10,23 +10,25 @@ start:
     movw %ax, %ss
     movw $BOOTSECT_ADDR, %sp
 
+    movw $0xb800, %ax
+    movw %ax, %gs
 
     #####################################################
-    #   INT 10, 13 打印字符串
-    #       BP: 待打印字符串首地址
-    #       CX: 待打印字符串长度
+    #   写显卡内存实现字符串打印
+    #   显卡内存基地址: 0xb8000 
     #####################################################
-    movw $boot_msg, %bp
+    movw $boot_msg, %si
     movw len, %cx
 
-    movb $0x13, %ah
-    movb $0x01, %al 
-    movb $0x00, %bh
-    movb $0x02, %bl
-    movb $0x0a, %dh     # row coordinate
-    movb $0x18, %dl     # column coordinate
-    
-    int $0x10
+    movw $0x540, %di
+print_char:
+    movb (%si), %al     # 待显示字符
+    movb $0x04, %ah     # 显示属性
+    movw %ax,   %gs:(%di)
+    addw $2,    %di
+    incw %si
+    decw %cx            # 显示字符个数减1
+    jnz print_char
 
 1:
     jmp 1b  
